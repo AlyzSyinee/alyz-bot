@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>PAIR DEVICE</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <a class="back" href="/welcome.html">&larr;</a>
+
+  <div class="card">
+    <h1 class="title">PAIR DEVICE</h1>
+    <p class="subtitle">Real pairing code</p>
+
+    <input class="input-neu" id="number" type="tel" inputmode="numeric" placeholder="6283xxxxxxx" value="62" autocomplete="off">
+    <button class="btn" id="gen">GENERATE CODE</button>
+
+    <div class="pair-code" id="code"></div>
+    <div class="pair-status" id="status"></div>
+
+    <p class="desc">WA &gt; Linked Device &gt; Link with phone number &gt; Masukkan kode. Jeda 30 detik anti limit.</p>
+  </div>
+
+<script>
+(function () {
+  var numEl = document.getElementById('number');
+  var btn = document.getElementById('gen');
+  var codeEl = document.getElementById('code');
+  var statusEl = document.getElementById('status');
+  var cdTimer = null, pollTimer = null;
+
+  function clean(v) {
+    var d = String(v).replace(/\D/g, '');
+    if (d.indexOf('0') === 0) d = '62' + d.slice(1);
+    if (d.indexOf('62') !== 0) d = '62' + d;
+    return d;
+  }
+  numEl.addEventListener('input', function () { numEl.value = clean(numEl.value); });
+
+  function cooldown(sec) {
+    clearInterval(cdTimer);
+    var left = sec;
+    btn.disabled = true;
+    btn.textContent = 'Cooldown ' + left + 's - anti limit';
+    cdTimer = setInterval(function () {
+      left--;
+      if (left <= 0) {
+        clearInterval(cdTimer);
+        btn.disabled = false;
+        btn.textContent = 'GENERATE CODE';
+      } else {
+        btn.textContent = 'Cooldown ' + left + 's - anti limit';
+      }
+    }, 1000);
+  }
+
+  function poll(number) {
+    clearInterval(pollTimer);
+    pollTimer = setInterval(function () {
+      fetch('/api/status?number=' + encodeURIComponent(number))
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.connected) {
+            clearInterval(pollTimer);
+            statusEl.textContent = 'CONNECTED';
+          }
+        })
+        .catch(function () {});
+    }, 3000);
+  }
+
+  btn.addEventListener('click', function () {
+    var number = clean(numEl.value);
+    numEl.value = number;
+    btn.disabled = true;
+    btn.textContent = 'Memproses...';
+    statusEl.textContent = '';
+    codeEl.style.display = 'none';
+
+    fetch('/api/pair', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ number: number })
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, status: r.status, d: d }; }); })
+      .then(function (res) {
+        if (res.ok) {
+          codeEl.textContent = res.d.code;
+          codeEl.style.display = 'block';
+          statusEl.textContent = 'Menunggu kode dimasukkan...';
+          cooldown(30);
+          poll(number);
+        } else if (res.status === 429) {
+          statusEl.textContent = res.d.error;
+          cooldown(res.d.wait || 30);
+        } else {
+          statusEl.textContent = res.d.error || 'Gagal';
+          btn.disabled = false;
+          btn.textContent = 'GENERATE CODE';
+        }
+      })
+      .catch(function () {
+        statusEl.textContent = 'Server tidak merespons';
+        btn.disabled = false;
+        btn.textContent = 'GENERATE CODE';
+      });
+  });
+})();
+</script>
+</body>
+</html>

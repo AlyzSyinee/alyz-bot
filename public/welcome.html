@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>ALYZ BOT</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <a class="back" href="/">&larr;</a>
+
+  <div class="card">
+    <h1 class="title">ALYZ BOT</h1>
+    <p class="subtitle">Multi device platform</p>
+
+    <img class="cover-img" id="cover" alt="" src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=800">
+    <input class="input-neu" id="coverInput" type="text" placeholder="Ganti cover link .jpg">
+
+    <p class="desc">ALYZ BOT adalah platform bot WhatsApp tanpa coding. Deploy multi bot, kelola banyak nomor, auto reply, moderasi grup, dan fitur media downloader dalam satu dashboard monochrome premium. Dibuat untuk performa tinggi menggunakan Baileys terbaru.</p>
+
+    <a class="btn" href="/pair.html">MULAI BOT</a>
+
+    <p class="footer">v1.0 &bull; SF &bull; NEUBRUTALISM</p>
+  </div>
+
+<script>
+(function () {
+  var cover = document.getElementById('cover');
+  var input = document.getElementById('coverInput');
+  var def = cover.src;
+  input.addEventListener('change', function () {
+    var v = input.value.trim();
+    cover.src = v || def;
+  });
+  cover.addEventListener('error', function () { if (cover.src !== def) cover.src = def; });
+})();
+</script>
+</body>
+</html>

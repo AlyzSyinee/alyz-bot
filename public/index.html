@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>ALYZ SECURE</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <a class="back" href="/">&larr;</a>
+
+  <div class="card">
+    <h1 class="title">ALYZ SECURE</h1>
+    <p class="subtitle">Hold to unlock</p>
+
+    <div class="fingerprint-wrap" id="fp">
+      <div class="fp-inner"><div class="fp-line"></div></div>
+    </div>
+
+    <div class="progress-track">
+      <div class="progress-fill" id="fill"></div>
+      <div class="progress-line" id="pline"></div>
+    </div>
+    <div class="percent" id="pct">0%</div>
+  </div>
+
+<script>
+(function () {
+  var fp = document.getElementById('fp');
+  var fill = document.getElementById('fill');
+  var pline = document.getElementById('pline');
+  var pctEl = document.getElementById('pct');
+  var pct = 0, holdTimer = null, decayTimer = null, done = false;
+
+  function render() {
+    fill.style.width = pct + '%';
+    pctEl.textContent = Math.round(pct) + '%';
+  }
+  function resetLine() {
+    pline.classList.remove('expand');
+    pline.style.width = '2px';
+    pline.style.left = '50%';
+  }
+
+  function startHold(e) {
+    if (e && e.cancelable) e.preventDefault();
+    if (done || holdTimer) return;
+    clearInterval(decayTimer); decayTimer = null;
+    holdTimer = setInterval(function () {
+      pct += 1.2;
+      if (pct >= 100) {
+        pct = 100;
+        clearInterval(holdTimer); holdTimer = null;
+        done = true;
+        setTimeout(function () { window.location.href = '/welcome.html'; }, 400);
+      }
+      fill.style.width = pct + '%';
+      pline.classList.add('expand');
+      pline.style.left = (50 - pct / 2) + '%';
+      pline.style.width = pct + '%';
+      pctEl.textContent = Math.round(pct) + '%';
+    }, 30);
+  }
+
+  function endHold() {
+    if (done) return;
+    clearInterval(holdTimer); holdTimer = null;
+    if (pct < 100 && !decayTimer) {
+      decayTimer = setInterval(function () {
+        pct -= 4;
+        if (pct <= 0) {
+          pct = 0;
+          clearInterval(decayTimer); decayTimer = null;
+          resetLine();
+        } else {
+          pline.style.left = (50 - pct / 2) + '%';
+          pline.style.width = pct + '%';
+        }
+        render();
+      }, 20);
+    }
+  }
+
+  fp.addEventListener('mousedown', startHold);
+  fp.addEventListener('touchstart', startHold, { passive: false });
+  window.addEventListener('mouseup', endHold);
+  window.addEventListener('touchend', endHold);
+  window.addEventListener('touchcancel', endHold);
+  document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+})();
+</script>
+</body>
+</html>
